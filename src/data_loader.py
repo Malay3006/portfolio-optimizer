@@ -1,4 +1,5 @@
-﻿import yfinance as yf
+import streamlit as st
+import yfinance as yf
 import pandas as pd
 
 def fetch_price_data(tickers, start, end):
@@ -6,23 +7,26 @@ def fetch_price_data(tickers, start, end):
         tickers=tickers,
         start=start,
         end=end,
-        auto_adjust=True,
+        auto_adjust=False,
         progress=False,
         threads=False
     )
 
+    st.write("Raw data:")
+    st.write(data.head())
+    st.write("Columns:", data.columns)
+
     if data.empty:
         return pd.DataFrame()
 
-    if "Close" in data.columns:
+    if isinstance(data.columns, pd.MultiIndex):
         prices = data["Close"]
+    elif "Close" in data.columns:
+        prices = data[["Close"]]
     else:
-        prices = data
+        return pd.DataFrame()
 
-    if isinstance(prices, pd.Series):
-        prices = prices.to_frame()
-
-    return prices.dropna()
+    return prices.dropna(how="all")
 
 def calculate_returns(price_df):
     return price_df.pct_change().dropna()
